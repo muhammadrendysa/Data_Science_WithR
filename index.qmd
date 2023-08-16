@@ -1,124 +1,91 @@
 ---
-title: "Koefisien Korelasi dan uji korelasi pada data Diabetes Factor"
-date: "2023-08-17"
-categories: [statistics]
-image: "00001a.png"
+title: "Deskriptif Statistic pada Data longley"
+date: "2021-12-17"
+categories: [statistic, code, analysis]
+image: "000012.png"
 ---
 
-## Tentang Dataset
+### memanggil package dan data
 
-[dataset](https://www.kaggle.com/datasets/joebeachcapital/diabetes-factors) ini terdiri dari 9 variabel yang menunjukan faktor-faktor yang mungkin saja berhubungan/berpengaruh terhadap penyakit diabetes:
+```{r}
+library(mlbench)
+library(correlation)
+data("longley")
+```
 
-- **pregnancies** : Variabel ini mencatat jumlah kehamilan yang pernah dialami oleh individu.
+### Melihat data
 
-- **glucose** : Variabel ini mengukur kadar glukosa darah individu dalam tes tertentu. Glukosa adalah gula yang diukur dalam darah dan menjadi indikator penting dalam penilaian risiko diabetes.
+```{r}
+longley
+```
+### Melihat Dimensi Pada Data
 
-- **blood  pressure** : Variabel ini mencatat tekanan darah sistolik dan diastolik individu. Tekanan darah adalah parameter vital yang relevan dalam evaluasi kesehatan dan risiko penyakit.
+```{r}
+dim(longley)
+```
+terdapat 16 baris data dan 7 variabel dalam data
 
-- **skin thickness** : Variabel ini mengukur ketebalan lapisan kulit tertentu pada individu. Meskipun keterkaitan dengan diabetes mungkin tidak jelas, beberapa studi mencatat bahwa ketebalan kulit tertentu dapat memiliki korelasi dengan risiko diabetes.
+### Melihat type data pada variabel
 
-- **insulin** : Variabel ini mengukur kadar insulin dalam darah individu. Insulin adalah hormon yang dihasilkan oleh pankreas dan berperan dalam mengatur kadar glukosa dalam darah.
+```{r}
+sapply(longley, class)
+```
 
-- **BMI** : Variabel ini mengukur indeks massa tubuh (BMI) individu. Ini adalah angka yang menggambarkan proporsi antara berat badan dan tinggi badan, dan digunakan sebagai indikator kesehatan berat badan.
+terlihat semua variabel bertype data numeric kecuali variabel tahun
 
-- **Diabetes Pedigree Function** : Variabel ini mungkin menggambarkan faktor keturunan yang terkait dengan diabetes pada individu. Ini mungkin termasuk riwayat keluarga diabetes atau faktor keturunan lainnya.
+### Melihat ringkasan data
 
-- **age** : Variabel ini mencatat usia individu dalam tahun.
+```{r}
+summary(longley)
+```
 
-- **Outcome** : ini merupakan variabel target, terdiri alive dan dead
+terlihat beberapa ringkasan pada data seperti min, quartil pertama, nilai tengah, rata-rata, quartil ketiga dan nilai max, kita juga dapat melihat interquartil untuk menunjukan seberapa besar variasi dalam data
 
-### Import Library
+```{r}
+sapply(longley, IQR)
+```
+
+### Standar Deviasi pada data
+
+```{r}
+sapply(longley, sd)
+```
+nilai standar deviasi menunjukan seberapa jauh point pengamatan dari nilai rata-rata
+
+### Skewness
+
+```{r}
+library(e1071)
+skews <- apply(longley, 2, skewness)
+print(skews)
+```
+
+terlihat beberapa variabel memiliki kemiringan ke-kanan(Unemployed) dan beberapa kemiringan ke-kiri
 
 ```{r}
 library(tidyverse)
-library(Hmisc)
-library(corrplot)
-library(correlation)
+ggplot(data = longley, mapping = aes(x = Armed.Forces))+
+  geom_density()+
+  theme_minimal()
 ```
+pada plot terlihat distribusi data pada variabel Armed.Forces bernilai negatif sehingga terdapat ekor pada sisi kiri pengamatan, dan point pengamatan berkumpul pada sisi kanan
 
-
-### Import Dataset
+### Korelasi
 
 ```{r}
-diabetes_factor <- read.csv("C:/Users/Repets/Downloads/data/diabetes-vid.csv")
-str(diabetes_factor)
-```
-
-### menghapus variabel Outcome untuk melihat korelasi
-
-```{r}
-diabetes_no_factor <- diabetes_factor %>%
-  select(- Outcome)
-
-head(diabetes_no_factor)
-```
-### Melihat Koefisien Korelasi Pada semua variabel
-
-```{r}
-koef_korel <- round(cor(diabetes_no_factor), digits = 2)
-data.frame(koef_korel)
-```
-
-### Visualisasi Koefisien Korelasi
-
-```{r}
-corrplot(cor(diabetes_no_factor),
-         method = "number", type = "upper")
-```
-
-### Interpretasi Koefisien Korelasi
-
-berdasarkan korelasi tidak tampak jelas adanya hubungan yang signifikan antara variabel-variabel, karena terlihat tidak adanya nilai korelasi yang extrem mendekati 1 dan -1, dapat disimpulkan variabel-variabel dalam data tidak memiliki hubungan yang kuat satu sama lain
-
-### Uji korelasi pada variabel-variabel dalam dataset
-
-```{r}
-var_test <- rcorr(as.matrix(diabetes_no_factor))
-
-data.frame(round(var_test$P, 3))
-```
-
-- $H_0$ = tidak ada hubungan yang signifikan antara kedua variabel
-- $H_1$ = ada hubungan yang signifikan antara kedua variabel  
-
-berdasarkan uji korelasi, terlihat banyaknya hubungan antara variabel yang sama dengan nol tidak cukup bukti untuk menolak hipotesis nol, bahwa tidak ada hubungan yang siginifikan antara variabel-variabel 
-
-### Kombinasi Koefisien Korelasi dan uji korelasi
-
-```{r}
-library(correlation)
-
-correlation::correlation(diabetes_no_factor,
+correlation::correlation(longley,
                          include_factors = TRUE,
                          method = "auto")
 ```
-### Interpretasi
+terlihat variabel GNP.deflator dan GNP memiliki hubungan yang signifikan dengan nilai korelasi 0.99, dan nilai p yang signifikan < .001***, dapat disimpulkan cukup bukti untuk menolak hipotesis nol(tidak adanya hubungan antar variabel)
 
-**Pregnancies vs Glucose**: Terdapat korelasi positif yang lemah (r = 0.13) antara jumlah kehamilan dan kadar glukosa darah. Hubungan ini signifikan secara statistik (p = 0.004**).
+```{r}
+library(corrplot)
+corrplot(cor(longley), method = "number", type = "upper")
+```
+ini adalah visualisasi matrix korelasi terlihat beberapa pasangan variabel seperti GNP.deflator dan GNP memiliki nilai 0.99 ini siginifikan positif kuat untuk hubungan kedua variabel tersebut
 
-**Pregnancies vs BloodPressure**: Terdapat korelasi positif yang lemah (r = 0.14) antara jumlah kehamilan dan tekanan darah. Hubungan ini juga signifikan secara statistik (p = 0.001**).
 
-**Pregnancies vs SkinThickness**: Tidak ada korelasi yang signifikan antara jumlah kehamilan dan ketebalan kulit. Nilai korelasi yang terdeteksi (r = -0.08) tidak signifikan secara statistik (p = 0.212).
-
-**Pregnancies vs Insulin**: Tidak ada korelasi yang signifikan antara jumlah kehamilan dan kadar insulin. Nilai korelasi yang terdeteksi (r = -0.07) tidak signifikan secara statistik (p = 0.333).
-
-**Pregnancies vs BMI**: Tidak ada korelasi yang signifikan antara jumlah kehamilan dan indeks massa tubuh (BMI). Korelasi sangat lemah (r = 0.02), dan p-value (p > 0.999) menunjukkan ketidaksignifikan.
-
-**Pregnancies vs DiabetesPedigreeFunction**: Tidak ada korelasi yang signifikan antara jumlah kehamilan dan fungsi garis keturunan diabetes. Korelasi sangat lemah (r = -0.03), dan p-value (p > 0.999) menunjukkan ketidaksignifikan.
-
-**Pregnancies vs Age**: Terdapat korelasi positif yang cukup kuat (r = 0.54) antara jumlah kehamilan dan usia. Hubungan ini sangat signifikan secara statistik (p < 0.001***).
-
-Proses interpretasi serupa dapat diterapkan pada pasangan variabel lainnya dalam tabel. Disarankan untuk memfokuskan perhatian pada nilai koefisien korelasi (r) dan nilai p-value. Jika nilai p-value kurang dari 0.05 (atau sesuai dengan tingkat signifikansi yang ditentukan), maka terdapat bukti yang cukup untuk menolak hipotesis nol dan menyimpulkan adanya hubungan linier yang signifikan antara variabel-variabel tersebut. Sebaliknya, jika nilai p-value lebih besar dari 0.05, tidak terdapat cukup bukti untuk menolak hipotesis nol dan dapat menganggap bahwa hubungan tidak signifikan.
-
-Namun, penting untuk diingat bahwa tidak menemukan hubungan yang signifikan dalam uji korelasi tidak berarti bahwa hubungan itu sama sekali tidak ada. Ada beberapa alasan mengapa nilai $p$ bisa melebihi `0.05`:
-
-- **Ukuran Sampel Terlalu Kecil**: Sampel yang kecil mungkin tidak memiliki kekuatan statistik yang cukup untuk mendeteksi hubungan yang sebenarnya ada.
-
-- **Variabilitas Data yang Tinggi**: Jika data memiliki variasi yang tinggi, maka hubungan yang mungkin nyata bisa tenggelam dalam "noise" (ketidakpastian).
-
-- **Hubungan Non-Linier**: Uji korelasi Pearson, misalnya, hanya mengukur hubungan linier. Jika hubungan antara variabel adalah non-linier, uji ini mungkin gagal mendeteksi hubungan tersebut.
-
-- **Faktor Eksternal**: Ada faktor-faktor eksternal atau variabel-variabel lain yang dapat memengaruhi hubungan antara variabel yang diuji.
 
 
 
